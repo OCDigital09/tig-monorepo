@@ -9,7 +9,9 @@ members = [
     "tig-utils",
     "tig-verifier",
 ]
-exclude = []
+exclude = [
+    "benches/vr-bench",
+]
 resolver = "2"
 
 [workspace.package]

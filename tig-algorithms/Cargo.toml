@@ -19,14 +19,16 @@ rand = { version = "0.8.5", default-features = false, features = [
 ] }
 serde = { version = "1.0.196", features = ["derive"] }
 serde_json = { version = "1.0.113" }
-tig-challenges = { path = "../tig-challenges", features = [
-    "hide_verification",
-] }
+tig-challenges = { path = "../tig-challenges", default-features = false }
 
 [lib]
 crate-type = ["cdylib", "rlib"]
 
 [features]
+default = ["hide_verification"]
+# Scored build keeps this on (default). The standalone bench disables it so the
+# solver links the public tig-challenges API (greedy baseline + evaluate_solution).
+hide_verification = ["tig-challenges/hide_verification"]
 c001 = ["tig-challenges/c001"]
 satisfiability = ["c001"]
 c002 = ["tig-challenges/c002"]
@@ -43,3 +45,6 @@ c007 = ["tig-challenges/c007"]
 job_scheduling = ["c007"]
 c008 = ["tig-challenges/c008"]
 energy_arbitrage = ["c008"]
+# Bench-only: supplies the __fuel_remaining extern that the real TIG runtime injects,
+# so the crate can also link/cdylib as a standalone bench. NEVER on the scored build.
+bench_standalone_fuel = []

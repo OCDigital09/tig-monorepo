@@ -370,6 +370,7 @@ fn build_progressive_master_routes(
 unsafe extern "C" {
     static __fuel_remaining: u64;
 }
+
 #[inline(always)]
 fn fuel_left() -> u64 {
     unsafe { core::ptr::read_volatile(core::ptr::addr_of!(__fuel_remaining)) }

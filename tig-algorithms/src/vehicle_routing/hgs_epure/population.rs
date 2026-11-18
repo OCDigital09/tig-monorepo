@@ -14,6 +14,12 @@ pub struct Subpopulation {
     pub biased_fitness: Vec<f64>,
     /// Indices into `indivs`, sorted by increasing penalized cost.
     pub order_cost: Vec<usize>,
+    /// Mean distance to each individual's `nb_close` closest neighbours. Maintained by
+    /// `prox_add` so `update_biased_fitnesses` never re-scans every `prox` row. The
+    /// values are bit-identical to a full re-scan: when a row's leading window is
+    /// unchanged the stored float is simply kept; when it changes the window is re-summed
+    /// the same way the full pass would.
+    pub avg_closest: Vec<f64>,
 }
 
 pub struct Population {
@@ -60,7 +66,7 @@ impl Population {
             let idx = Self::worst_index_biased_with_clone_priority(sub);
             Self::remove_at_index(sub, idx);
             Self::order_cost_rebuild(sub);
-            Self::update_biased_fitnesses(sub, params);
+            Self::update_biased_fitnesses(sub, params, false);
         }
     }
 
@@ -82,11 +88,12 @@ impl Population {
 
             let new_idx = sub.indivs.len();
             sub.indivs.push(ind);
-            Self::prox_add(sub, self.data.as_ref(), new_idx);
+            let nb_close = params.nb_close;
+            Self::prox_add(sub, self.data.as_ref(), new_idx, nb_close);
 
             Self::order_cost_rebuild(sub);
 
-            Self::update_biased_fitnesses(sub, params);
+            Self::update_biased_fitnesses(sub, params, true);
 
             if sub.indivs.len() > params.mu + params.lambda {
                 Self::survivors_selection(sub, params);
@@ -354,8 +361,8 @@ impl Population {
         Self::order_cost_rebuild(&mut self.feasible);
         Self::order_cost_rebuild(&mut self.infeasible);
 
-        Self::update_biased_fitnesses(&mut self.feasible, params);
-        Self::update_biased_fitnesses(&mut self.infeasible, params);
+        Self::update_biased_fitnesses(&mut self.feasible, params, false);
+        Self::update_biased_fitnesses(&mut self.infeasible, params, false);
     }
 
     pub fn best_feasible(&self) -> Option<&Individual> {
@@ -462,21 +469,42 @@ impl Population {
         worst_idx
     }
 
-    /// Keeps every `prox` row sorted by ascending distance.
-    fn prox_add(sub: &mut Subpopulation, data: &Problem, new_idx: usize) {
+    /// Keeps every `prox` row sorted by ascending distance and maintains `avg_closest`
+    /// so it equals what a full re-scan in `update_biased_fitnesses` would produce for a
+    /// population of this size. Since the maintained dtype stays identical (bit-for-bit
+    /// when a window is unchanged; same summation when it changes), the final ranking is
+    /// unchanged while the per-add cost drops from rescanning every row to touching only
+    /// rows whose `nb_close`-window the just-inserted neighbour entered.
+    fn prox_add(sub: &mut Subpopulation, data: &Problem, new_idx: usize, nb_close: usize) {
         let count = sub.indivs.len();
         debug_assert_eq!(sub.prox.len(), new_idx);
+        debug_assert_eq!(sub.avg_closest.len(), new_idx);
         sub.prox.push(Vec::with_capacity(count.saturating_sub(1)));
+
+        // Window width `update_biased_fitnesses` would use right after this insert:
+        // nb_close.min(n - 1) where n == new_idx + 1.
+        let k = nb_close.min(new_idx);
+        let mut touched: Vec<usize> = Vec::with_capacity(count);
 
         for i in 0..new_idx {
             let d = Self::hamming_distance(data, &sub.indivs[i], &sub.indivs[new_idx]);
 
             let row = &mut sub.prox[i];
             let insert_pos = row.partition_point(|(dd, _)| *dd <= d);
+            if insert_pos < k {
+                touched.push(i);
+            }
             row.insert(insert_pos, (d, new_idx));
             sub.prox[new_idx].push((d, i));
         }
         sub.prox[new_idx].sort_unstable_by(|a, b| a.0.total_cmp(&b.0));
+
+        for &i in &touched {
+            let s: f64 = sub.prox[i][..k].iter().map(|(dd, _)| *dd).sum();
+            sub.avg_closest[i] = s / (k as f64);
+        }
+        let s: f64 = sub.prox[new_idx][..k].iter().map(|(dd, _)| *dd).sum();
+        sub.avg_closest.push(s / (k as f64));
     }
 
     /// `swap_remove` semantics: whatever occupied the last slot is renumbered to `idx`.
@@ -485,6 +513,7 @@ impl Population {
         let last = count - 1;
         sub.indivs.swap_remove(idx);
         sub.biased_fitness.swap_remove(idx);
+        sub.avg_closest.swap_remove(idx);
         if idx != last {
             sub.prox.swap(idx, last);
         }
@@ -521,32 +550,40 @@ impl Population {
         sub.order_cost.sort_unstable_by_key(|&i| sub.indivs[i].cost);
     }
 
-    fn update_biased_fitnesses(sub: &mut Subpopulation, params: &Params) {
+    fn update_biased_fitnesses(sub: &mut Subpopulation, params: &Params, avg_fresh: bool) {
         let n = sub.indivs.len();
         if n == 0 {
+            sub.avg_closest.clear();
             return;
         }
         sub.biased_fitness.resize(n, 0.0);
+        sub.avg_closest.resize(n, 0.0);
         if n == 1 {
+            sub.avg_closest[0] = 0.0;
             sub.biased_fitness[0] = 0.0;
             return;
         }
 
         let nb_close = params.nb_close.min(n - 1);
 
-        let mut avg_closest = vec![0.0; n];
-        for i in 0..n {
-            let neighbors = &sub.prox[i];
-            debug_assert!(neighbors.len() == n - 1);
-            let mut sum = 0.0;
-            for k in 0..nb_close {
-                sum += neighbors[k].0;
+        // `avg_closest` is already bit-exact from `prox_add` for a just-inserted row set.
+        // After a survivor removal, repairs and conservations shift indices/windows, so
+        // rescan the rows once to refill it (matching the original full scan).
+        if !avg_fresh {
+            for i in 0..n {
+                let mut sum = 0.0;
+                let row = &sub.prox[i];
+                debug_assert!(row.len() == n - 1);
+                for k in 0..nb_close {
+                    sum += row[k].0;
+                }
+                sub.avg_closest[i] = sum / (nb_close as f64);
             }
-            avg_closest[i] = sum / (nb_close as f64);
         }
 
         // Negated so that an ascending sort puts the most diverse individual first.
-        let mut diversity_order: Vec<(f64, usize)> = (0..n).map(|i| (-avg_closest[i], i)).collect();
+        let mut diversity_order: Vec<(f64, usize)> =
+            (0..n).map(|i| (-sub.avg_closest[i], i)).collect();
         diversity_order.sort_unstable_by(|a, b| a.0.total_cmp(&b.0));
 
         let denom = (n - 1) as f64;
