@@ -31,6 +31,30 @@ boost, or run regret-k alone with `credit_scale_permille = 1000`.
 `hgs_epure`. The `bench_standalone_fuel` Cargo feature (the `__fuel_remaining` shim for local
 benchmarks) is **off** in the default build and must never be enabled on a scored build.
 
+## Fuel profile (measured, judged build 0.0.8)
+
+Fuel is TIG's build-instrumented counter (LLVM pass), **not** wall time — the numbers below were
+measured by running the real instrumented `.so` through the judge's `tig-runtime`/`tig-verifier`
+(dev/runtime `0.0.8` images). Max per-instance budget is 500 billion; the `--fuel 2_000_000_000`
+`tig-runtime` default is a test flag, not the on-chain budget (benchmarker-set per track through
+`track_settings`, capped by `challenge_config["max_fuel_budget"]`).
+
+| track | fuel per nonce (converging) | share of 500e9 cap | notes |
+|---|---|---|---|
+| n=600 | ~90.5e9 | 18% | small-instance preset iterates far longer |
+| n=3000 | ~3.5e9 (3.5–3.8e9 across nonces) | 0.7% | uniform; all nonces converge cheaply |
+| n=2000 | ~1.8e9 **or** up to ~468e9 | 0.4%–94% | **bimodal** — see below |
+
+**n=2000 is bimodal.** Roughly 3 in 5 nonces converge in ~1.8e9, but a hard subset (e.g. nonces 4
+and 7 of the sampled set) needs up to **~468e9 (94% of the cap)** to converge. Fuel is **not**
+predictable per nonce on this track. Achieved quality on those hard nonces rises monotonically
+with the benchmarker's fuel budget (10e9→122718, 50e9→146628, 100e9→159610, 500e9→173411 on one
+sampled nonce), so a benchmarker running a tight budget gets visibly lower quality than one
+running near the cap. The solver does **not** self-terminate early — it spends whatever budget it
+is given improving and is hard-killed at the cap, always having saved its best incumbent
+(feasible + verifier-passing) at the last phase boundary. Budgets well below ~50e9 on n=2000 will
+under-achieve on the hard nonces by construction.
+
 ## References and Acknowledgments
 
 This submission builds on hgs_prometheus: a hybrid genetic search for vehicle routing with

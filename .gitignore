@@ -21,3 +21,8 @@ db_data/
 murelan/
 benches/
 bench_fuel.rs
+
+# Judged-docker-build artifacts (build_algorithm output) — NEVER commit
+tig-binary/src/entry_point.rs
+export_symbols.map
+output.map
