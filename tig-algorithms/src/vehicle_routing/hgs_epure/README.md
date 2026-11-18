@@ -4,9 +4,9 @@
 
 * **Challenge Name:** vehicle_routing
 * **Algorithm Name:** hgs_epure_ep3
-* **Copyright:** Copyright in the base algorithm belongs to FP Labs; modifications © FiveStacks
+* **Copyright:** 2026 Copyright FP Labs modifications FiveStacks
 * **Identity of Submitter:** FiveStacks
-* **Identity of Creator of Algorithmic Method:** Thibaut Vidal (see References); base implementation by FP Labs
+* **Identity of Creator of Algorithmic Method:** Thibaut Vidal base implementation by FP Labs
 * **Unique Algorithm Identifier (UAI):** c002_a120
 
 ## Hyperparameters
