@@ -42,7 +42,7 @@ measured by running the real instrumented `.so` through the judge's `tig-runtime
 | track | fuel per nonce (converging) | share of 500e9 cap | notes |
 |---|---|---|---|
 | n=600 | ~90.5e9 | 18% | small-instance preset iterates far longer |
-| n=3000 | ~3.5e9 (3.5–3.8e9 across nonces) | 0.7% | uniform; all nonces converge cheaply |
+| n=3000 | ~4.1e9 (3.9–4.1e9 across nonces) | 0.8% | uniform; all nonces converge cheaply; profile widened for n=3000 |
 | n=2000 | ~1.8e9 **or** up to ~468e9 | 0.4%–94% | **bimodal** — see below |
 
 **n=2000 is bimodal.** Roughly 3 in 5 nonces converge in ~1.8e9, but a hard subset (e.g. nonces 4
