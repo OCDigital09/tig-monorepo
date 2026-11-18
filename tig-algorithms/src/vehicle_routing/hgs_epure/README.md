@@ -4,10 +4,10 @@
 
 * **Challenge Name:** vehicle_routing
 * **Algorithm Name:** hgs_epure_ep3
-* **Copyright:** FiveStacks
+* **Copyright:** Copyright in the base algorithm belongs to FP Labs; modifications © FiveStacks
 * **Identity of Submitter:** FiveStacks
-* **Identity of Creator of Algorithmic Method:** Thibaut Vidal
-* **Unique Algorithm Identifier (UAI):** 
+* **Identity of Creator of Algorithmic Method:** Thibaut Vidal (see References); base implementation by FP Labs
+* **Unique Algorithm Identifier (UAI):** c002_a120
 
 ## Hyperparameters
 
@@ -42,7 +42,26 @@ deterministic and anytime, and feasible solutions are reported through the TIG s
 
 [1] Vidal, T., Crainic, T. G., Gendreau, M., and Prins, C. (2013). *A hybrid genetic algorithm with adaptive diversity management for a large class of vehicle routing problems with time windows*. Computers & Operations Research, 40(1), 475-489. https://doi.org/10.1016/j.cor.2012.07.018
 
-[2] Vidal, T. (2022). *Hybrid genetic search for the CVRP: Open-source implementation and SWAP* neighborhood*. Computers & Operations Research, 140, 105643. https://doi.org/10.1016/j.cor.2021.105643
+[2] Vidal, T. (2022). *Hybrid genetic search for the CVRP: Open-source implementation and SWAP\* neighborhood*. Computers & Operations Research, 140, 105643. https://doi.org/10.1016/j.cor.2021.105643
+
+### Code References
+
+- Base algorithm: `hgs_epure`, authored by **FP Labs** (vehicle_routing, c002_a110). Copyright remains with FP Labs. This submission is a derivative fork of that base.
+- `hgs_prometheus`: the hybrid genetic search this lineage builds on (see References above).
+
+### Modifications by FiveStacks (this submission)
+
+The base `hgs_epure` engine (population, local search, SREX crossover, decomposition, reverse mode,
+constructive, individual, problem) is FP Labs' work. FiveStacks adds:
+
+- `regret_k` hyperparameter: look-ahead repair in the SREX unplanned-customer reinsertion.
+- `credit_scale_permille` hyperparameter: gates the local-search deterioration budget.
+- Incremental population bookkeeping and bench scaffolding (feature-gated `__fuel_remaining` shim,
+  off in default build).
+- Early-stop layer (`early_stop`, `target_quality`): between-decomposition-phase stopping to halt a
+  run once it clearly reaches or can no longer reach the qualifying quality. The technique is
+  informed by the approach in `vehicle_routing/murelan`; re-implemented inside this crate.
+- Track profiles for the 2000/3000 `n_nodes` tracks (10 decomposition phases, scaled granularity).
 
 ## License
 
