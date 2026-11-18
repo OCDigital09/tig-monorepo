@@ -25,6 +25,10 @@ pub struct Params {
     pub nb_elite: usize,
     pub crossover_srex_percent: usize,
     pub max_cli_srex: usize,
+    /// Repair look-ahead: 1 = greedy (bit-identical to stock SREX repair); >1 picks
+    /// the unplanned customer with the largest (best - second-best) insertion-cost
+    /// gap first. Kept in Params so it flows through the hyperparameter map merge.
+    pub regret_k: usize,
     pub max_credit_deterioration: usize,
     pub selection_weight_feasible: usize,
     pub factor_split: f64,
@@ -205,6 +209,7 @@ impl Params {
             nb_elite: preset.nb_elite,
             crossover_srex_percent: 75,
             max_cli_srex: preset.max_cli_srex,
+            regret_k: 1,
             max_credit_deterioration: 10,
             selection_weight_feasible: 2,
             factor_split: 1.3,

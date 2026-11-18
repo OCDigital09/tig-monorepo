@@ -1179,35 +1179,93 @@ impl Genetic {
 
         let mut states: Vec<RouteSeqState> = child_routes.into_iter().map(rebuild_state).collect();
 
-        for id in unplanned {
-            let inserted = Sequence::singleton(data, id);
-            // (route index, insertion position)
-            let mut best: Option<(usize, usize)> = None;
-
-            let mut best_delta: i64 = i64::MAX;
-            for (rid, state) in states.iter().enumerate() {
-                let route = state
-                    .route
-                    .as_ref()
-                    .expect("Route state should contain a route");
-                for pos in 1..route.len() {
-                    let head_seq = copy_at(&state.head, pos - 1);
-                    let tail_seq = copy_at(&state.tail, pos);
-                    let cand_cost = Sequence::eval3(data, params, &head_seq, &inserted, &tail_seq);
-                    let delta = cand_cost - state.base_cost;
-                    let better = delta < best_delta;
-                    best_delta = if better { delta } else { best_delta };
-                    best = if better { Some((rid, pos)) } else { best };
+        // Repair the unplanned customers. `regret_k == 1` reproduces the stock greedy
+        // behaviour exactly (visit customers in shuffled order, insert each at its
+        // cheapest slot). `regret_k > 1` instead repeatedly inserts the customer with
+        // the largest gap between its two best insertion costs — the customer that
+        // most penalises being postponed — which is the standard regret-k repair.
+        if self.params.regret_k > 1 {
+            while !unplanned.is_empty() {
+                let mut sel = 0usize;
+                let mut sel_regret = i64::MIN; // best - 2nd best gap, first candidate
+                let mut best2 = [i64::MAX; 2];
+                let mut at = [(0usize, 0usize); 2];
+                for (_ui, &id) in unplanned.iter().enumerate() {
+                    let inserted = Sequence::singleton(data, id);
+                    best2[0] = i64::MAX;
+                    best2[1] = i64::MAX;
+                    at[0] = (0, 0);
+                    at[1] = (0, 0);
+                    for (rid, state) in states.iter().enumerate() {
+                        let route = state
+                            .route
+                            .as_ref()
+                            .expect("Route state should contain a route");
+                        for pos in 1..route.len() {
+                            let head_seq = copy_at(&state.head, pos - 1);
+                            let tail_seq = copy_at(&state.tail, pos);
+                            let cand_cost =
+                                Sequence::eval3(data, params, &head_seq, &inserted, &tail_seq);
+                            let delta = cand_cost - state.base_cost;
+                            if delta < best2[0] {
+                                best2[1] = best2[0];
+                                at[1] = at[0];
+                                best2[0] = delta;
+                                at[0] = (rid, pos);
+                            } else if delta < best2[1] {
+                                best2[1] = delta;
+                                at[1] = (rid, pos);
+                            }
+                        }
+                    }
+                    // Regret: the cost you pay for not placing this customer this round.
+                    let regret = best2[1].saturating_sub(best2[0]);
+                    if regret > sel_regret {
+                        sel_regret = regret;
+                        sel = _ui;
+                    }
                 }
+                let id = unplanned.remove(sel);
+                let (rid, pos) = at[0];
+                let mut route = states[rid]
+                    .route
+                    .take()
+                    .expect("Selected route state should contain a route");
+                route.insert(pos, id);
+                states[rid] = rebuild_state(route);
             }
+        } else {
+            for id in unplanned {
+                let inserted = Sequence::singleton(data, id);
+                // (route index, insertion position)
+                let mut best: Option<(usize, usize)> = None;
 
-            let (rid, pos) = best.expect("At least one insertion position should exist");
-            let mut route = states[rid]
-                .route
-                .take()
-                .expect("Selected route state should contain a route");
-            route.insert(pos, id);
-            states[rid] = rebuild_state(route);
+                let mut best_delta: i64 = i64::MAX;
+                for (rid, state) in states.iter().enumerate() {
+                    let route = state
+                        .route
+                        .as_ref()
+                        .expect("Route state should contain a route");
+                    for pos in 1..route.len() {
+                        let head_seq = copy_at(&state.head, pos - 1);
+                        let tail_seq = copy_at(&state.tail, pos);
+                        let cand_cost =
+                            Sequence::eval3(data, params, &head_seq, &inserted, &tail_seq);
+                        let delta = cand_cost - state.base_cost;
+                        let better = delta < best_delta;
+                        best_delta = if better { delta } else { best_delta };
+                        best = if better { Some((rid, pos)) } else { best };
+                    }
+                }
+
+                let (rid, pos) = best.expect("At least one insertion position should exist");
+                let mut route = states[rid]
+                    .route
+                    .take()
+                    .expect("Selected route state should contain a route");
+                route.insert(pos, id);
+                states[rid] = rebuild_state(route);
+            }
         }
 
         let routes = states
