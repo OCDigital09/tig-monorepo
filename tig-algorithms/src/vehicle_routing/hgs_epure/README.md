@@ -3,11 +3,11 @@
 ## Submission Details
 
 * **Challenge Name:** vehicle_routing
-* **Algorithm Name:** hgs_epure
-* **Copyright:** 2026 FP Labs
-* **Identity of Submitter:** FP Labs
+* **Algorithm Name:** hgs_epure_ep2
+* **Copyright:** FiveStacks
+* **Identity of Submitter:** FiveStacks
 * **Identity of Creator of Algorithmic Method:** Thibaut Vidal
-* **Unique Algorithm Identifier (UAI):** c002_a110
+* **Unique Algorithm Identifier (UAI):** 
 
 ## Hyperparameters
 
