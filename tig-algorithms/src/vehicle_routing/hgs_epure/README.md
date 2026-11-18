@@ -3,7 +3,7 @@
 ## Submission Details
 
 * **Challenge Name:** vehicle_routing
-* **Algorithm Name:** hgs_epure_ep2
+* **Algorithm Name:** hgs_epure_ep3
 * **Copyright:** FiveStacks
 * **Identity of Submitter:** FiveStacks
 * **Identity of Creator of Algorithmic Method:** Thibaut Vidal

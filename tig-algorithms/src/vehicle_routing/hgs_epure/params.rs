@@ -158,7 +158,7 @@ struct TrackProfile {
 }
 
 #[rustfmt::skip]
-const TRACK_PROFILES: [TrackProfile; 5] = [
+const TRACK_PROFILES: [TrackProfile; 7] = [
     TrackProfile { nb_nodes:  600, allow_swap3: true, granularity: 35, granularity2: 45,
                    swapstar_capa_filter: 0.6, max_credit_deterioration: 25,
                    decomp_target_size: 200, decomp_nb_phases:  9, l4_permille: 600 },
@@ -174,6 +174,18 @@ const TRACK_PROFILES: [TrackProfile; 5] = [
     TrackProfile { nb_nodes: 1000, allow_swap3: true, granularity: 30, granularity2: 40,
                    swapstar_capa_filter: 0.5, max_credit_deterioration: 20,
                    decomp_target_size: 200, decomp_nb_phases: 12, l4_permille: 600 },
+    // New on-chain tracks (n_nodes: 600/800/1000/2000/3000, announced 2026-11-18). Larger
+    // instances decompose to moderate cluster counts (k ≈ n/target ≈ 7-9) with more phases
+    // than the fallback preset, so the local search still gains from the decomposition that
+    // the profiled small tracks get. granularity drops as n grows to keep the swap* neighbor
+    // count tractable. tuning_ok: extrapolated from the 800/900/1000 trend; A/B against the
+    // default 2-phase fallback before treating as final.
+    TrackProfile { nb_nodes: 2000, allow_swap3: true, granularity: 25, granularity2: 35,
+                   swapstar_capa_filter: 0.5, max_credit_deterioration: 20,
+                   decomp_target_size: 250, decomp_nb_phases: 10, l4_permille: 600 },
+    TrackProfile { nb_nodes: 3000, allow_swap3: true, granularity: 20, granularity2: 30,
+                   swapstar_capa_filter: 0.4, max_credit_deterioration: 25,
+                   decomp_target_size: 350, decomp_nb_phases: 10, l4_permille: 600 },
 ];
 
 impl Params {
