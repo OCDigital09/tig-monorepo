@@ -7,7 +7,7 @@
 * **Copyright:** 2026 Copyright FP Labs modifications FiveStacks
 * **Identity of Submitter:** FiveStacks
 * **Identity of Creator of Algorithmic Method:** Thibaut Vidal base implementation by FP Labs
-* **Unique Algorithm Identifier (UAI):** c002_a120
+* **Unique Algorithm Identifier (UAI):** null
 
 ## Hyperparameters
 
