@@ -177,13 +177,16 @@ const TRACK_PROFILES: [TrackProfile; 7] = [
     // New on-chain tracks (n_nodes: 600/800/1000/2000/3000, announced 2026-11-18). Larger
     // instances decompose to moderate cluster counts (k ≈ n/target ≈ 7-9) with more phases
     // than the fallback preset, so the local search still gains from the decomposition that
-    // the profiled small tracks get. granularity drops as n grows to keep the swap* neighbor
-    // count tractable. tuning_ok: extrapolated from the 800/900/1000 trend; A/B against the
-    // default 2-phase fallback before treating as final.
+    // the profiled small tracks get. granularity for 2000/3000 is MEASURED on the judged
+    // build (0.0.8), not extrapolated: at n=3000 the solver reaches its quality plateau in
+    // ~2e9 of fuel (0.4% of the 500e9 cap) and compute-budget knobs (phases, sub-it, iteration
+    // caps) are inert — only WIDENING the swap*/neighborhood scope (granularity 35/45) escapes
+    // the plateau (+2% avg over 6 nonces, worst -0.8%, fuel 4.1e9=0.8% cap). swapstar_capa_filter
+    // stays 0.4: raising it to 1.0 is per-nonce non-robust (helps some, -7.6% on hard nonce 7).
     TrackProfile { nb_nodes: 2000, allow_swap3: true, granularity: 25, granularity2: 35,
                    swapstar_capa_filter: 0.5, max_credit_deterioration: 20,
                    decomp_target_size: 250, decomp_nb_phases: 10, l4_permille: 600 },
-    TrackProfile { nb_nodes: 3000, allow_swap3: true, granularity: 20, granularity2: 30,
+    TrackProfile { nb_nodes: 3000, allow_swap3: true, granularity: 35, granularity2: 45,
                    swapstar_capa_filter: 0.4, max_credit_deterioration: 25,
                    decomp_target_size: 350, decomp_nb_phases: 10, l4_permille: 600 },
 ];
