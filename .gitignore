@@ -26,3 +26,4 @@ bench_fuel.rs
 tig-binary/src/entry_point.rs
 export_symbols.map
 output.map
+**/mod.rs.bak
