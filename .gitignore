@@ -17,3 +17,7 @@ __pycache__/
 db_data/
 
 .DS_Store
+# Stray A/B-baseline copy (competitor murelan) — NEVER commit, benchmark-only
+murelan/
+benches/
+bench_fuel.rs
