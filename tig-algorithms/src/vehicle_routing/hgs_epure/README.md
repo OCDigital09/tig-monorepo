@@ -9,6 +9,28 @@
 * **Identity of Creator of Algorithmic Method:** Thibaut Vidal
 * **Unique Algorithm Identifier (UAI):** c002_a110
 
+## Hyperparameters
+
+All `Params` fields are set via the TIG runtime hyperparameters map (serde-merged over the
+defaults; `exploration_level` is the only key the solver intercepts itself). The solver's
+two Iteration-1/2 levers:
+
+| key | type | default | behaviour |
+|---|---|---|---|
+| `regret_k` | usize | `1` | Repair look-ahead in the SREX crossover. `1` = stock greedy repair (bit-identical), `>1` = regret-k insertion (insert the unplanned customer with the largest best-minus-second-best gap first). |
+| `credit_scale_permille` | usize | `1000` | LS deterioration-budget multiplier (permille). `1000` = exact stock `move_credit` cap, `>1000` lets the local search accept more deteriorating moves to escape local minima, `<1000` tightens it into a purer descent. |
+
+**Recommended scored setting:** `credit_scale_permille = 2500`. Measured same-seed/reproducible:
+quality +2.2% at n=600 and +1.9% at n=1000 vs the stock setting (see `genetic.rs`/`local_search.rs`
+commit history for the runs). `regret_k > 1` does **not** combine with the credit widening — the
+two cancel (measured 171290 vs 172263 at n=600) — so either keep `regret_k = 1` with the credit
+boost, or run regret-k alone with `credit_scale_permille = 1000`.
+
+**Default-build guarantee:** both default to stock-equivalent values (`regret_k = 1`,
+`credit_scale_permille = 1000`), so an unmodified submission is bit-identical to the base
+`hgs_epure`. The `bench_standalone_fuel` Cargo feature (the `__fuel_remaining` shim for local
+benchmarks) is **off** in the default build and must never be enabled on a scored build.
+
 ## References and Acknowledgments
 
 This submission builds on hgs_prometheus: a hybrid genetic search for vehicle routing with
