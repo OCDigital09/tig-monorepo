@@ -13,6 +13,8 @@ mod problem;
 mod reverse_mode;
 mod sequence;
 mod solver;
+mod stopping;
+mod baseline;
 #[cfg(feature = "bench_standalone_fuel")]
 mod bench_fuel;
 pub use solver::Solver;

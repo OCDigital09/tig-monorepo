@@ -3,6 +3,7 @@ use super::loader_tig::TigLoader;
 use super::params::Params;
 use super::problem::Problem;
 use super::reverse_mode;
+use super::stopping::Stopping;
 use anyhow::Result;
 use rand::{rngs::SmallRng, SeedableRng};
 use serde_json::{Map, Value};
@@ -16,9 +17,10 @@ impl Solver {
         params: Params,
         hyperparameters: &Option<Map<String, Value>>,
         save_solution: Option<&dyn Fn(&Solution) -> Result<()>>,
+        stopping: Option<Stopping>,
     ) -> Result<Option<Solution>> {
         if params.decomp_nb_phases > 0 {
-            return reverse_mode::solve_reversed_mode(data, params, hyperparameters, save_solution);
+            return reverse_mode::solve_reversed_mode(data, params, hyperparameters, save_solution, stopping);
         }
 
         let mut rng = SmallRng::from_seed(data.seed);
@@ -35,8 +37,9 @@ impl Solver {
     ) -> Result<Option<Solution>> {
         let data = TigLoader::load(challenge);
         let params = Params::initialize(hyperparameters, &data);
+        let stopping = Stopping::new(challenge, hyperparameters);
 
-        match Self::solve(data, params, hyperparameters, save_solution) {
+        match Self::solve(data, params, hyperparameters, save_solution, stopping) {
             Ok(Some(solution)) => Ok(Some(solution)),
             Ok(None) => Ok(None),
             Err(_) => Ok(None),

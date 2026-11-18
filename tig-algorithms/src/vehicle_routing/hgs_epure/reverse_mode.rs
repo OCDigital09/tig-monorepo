@@ -5,6 +5,7 @@ use super::local_search::LocalSearch;
 use super::params::Params;
 use super::problem::Problem;
 use super::sequence::Sequence;
+use super::stopping::Stopping;
 use anyhow::Result;
 use rand::rngs::SmallRng;
 use rand::seq::SliceRandom;
@@ -414,6 +415,7 @@ pub(super) fn solve_reversed_mode(
     mut params: Params,
     hyperparameters: &Option<Map<String, Value>>,
     save_solution: Option<&dyn Fn(&Solution) -> Result<()>>,
+    stopping: Option<Stopping>,
 ) -> Result<Option<Solution>> {
     let mut rng = SmallRng::from_seed(data.seed);
     let data_arc = Arc::new(data);
@@ -529,6 +531,12 @@ pub(super) fn solve_reversed_mode(
             break;
         }
         if params.stop_distance > 0 && (incumbent.ind.cost as i64) <= params.stop_distance {
+            break;
+        }
+        if stopping
+            .as_ref()
+            .map_or(false, |a| a.settled(incumbent.ind.cost as i64, phase_idx, exploration_schedule.len()))
+        {
             break;
         }
         let phase_base_routes = incumbent.routes.clone();
