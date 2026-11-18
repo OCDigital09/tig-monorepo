@@ -30,6 +30,10 @@ pub struct Params {
     /// gap first. Kept in Params so it flows through the hyperparameter map merge.
     pub regret_k: usize,
     pub max_credit_deterioration: usize,
+    /// Per-offspring deterioration-budget multiplier (permille): 1000 = exact stock
+    /// behaviour. >1000 widens `move_credit` (escape local minima, more fuel per
+    /// offspring); <1000 tightens it into a purer descent. Bench A/B knob.
+    pub credit_scale_permille: usize,
     pub selection_weight_feasible: usize,
     pub factor_split: f64,
     pub decomp_target_size: usize,
@@ -211,6 +215,7 @@ impl Params {
             max_cli_srex: preset.max_cli_srex,
             regret_k: 1,
             max_credit_deterioration: 10,
+            credit_scale_permille: 1000,
             selection_weight_feasible: 2,
             factor_split: 1.3,
             decomp_target_size: preset.decomp_target_size,

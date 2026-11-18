@@ -461,8 +461,12 @@ impl LocalSearch {
         if self.move_credit < 0 {
             return;
         }
+        let cap = {
+            let base = self.params.max_credit_deterioration as i64;
+            let scale = self.params.credit_scale_permille;
+            if scale == 1000 { base } else { (base * scale as i64) / 1000 }
+        };
         if delta < 0 {
-            let cap = self.params.max_credit_deterioration as i64;
             self.move_credit = (self.move_credit - delta).min(cap);
         } else if delta > 0 {
             debug_assert!(
