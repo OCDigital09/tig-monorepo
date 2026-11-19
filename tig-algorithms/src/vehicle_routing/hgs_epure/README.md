@@ -42,8 +42,21 @@ measured by running the real instrumented `.so` through the judge's `tig-runtime
 | track | fuel per nonce (converging) | share of 500e9 cap | notes |
 |---|---|---|---|
 | n=600 | ~90.5e9 | 18% | small-instance preset iterates far longer |
-| n=3000 | ~4.1e9 (3.9–4.1e9 across nonces) | 0.8% | uniform; all nonces converge cheaply; profile widened for n=3000 |
+| n=3000 | ~990e9 (corrected target) | ~20% | see note below — old "~4.1e9 cheap" profile was a give-up artifact |
 | n=2000 | ~1.8e9 **or** up to ~468e9 | 0.4%–94% | **bimodal** — see below |
+
+**Important correction (measured on the real fuel counter, judged 0.0.8):** earlier
+profiles listed n=3000 at ~4.1e9 and n=2000's converging nonces at ~1.8e9 as "cheap."
+That was an **artifact of a target bug, not real convergence**: the early-stop TARGETS
+table lacked n=2000/3000 entries, so the `.min_by_key` fallback snapped both to the
+n=1000 line (186200), which sits ABOVE both live qualifying lines — making the internal
+`giveup_quality` unreachable and causing the solver to bail in phase 1 with ~80k quality
+on only ~2-4e9 fuel. It could never qualify those tracks. With the corrected targets
+(n=2000 -> 148123, n=3000 -> 136092 from live round-25 lines), the solver genuinely
+searches: n=3000 nonces now run to ~990e9 (~20% of cap) to chase the line, and n=2000's
+hard nonces reach ~150-980e9 (the previous ~1.8e9 "converging" figure was the same
+give-up artifact). Benchmarkers must set budgets against the CORRECTED profile, not the
+stale "cheap" one.
 
 **n=2000 is bimodal.** Roughly 3 in 5 nonces converge in ~1.8e9, but a hard subset (e.g. nonces 4
 and 7 of the sampled set) needs up to **~468e9 (94% of the cap)** to converge. Fuel is **not**
