@@ -3,7 +3,7 @@
 ## Submission Details
 
 * **Challenge Name:** vehicle_routing
-* **Algorithm Name:** hgs_epure
+* **Algorithm Name:** hgs_epure_ep4
 * **Copyright:** 2026 Copyright FP Labs modifications FiveStacks
 * **Identity of Submitter:** FiveStacks
 * **Identity of Creator of Algorithmic Method:** Thibaut Vidal base implementation by FP Labs
@@ -103,6 +103,12 @@ constructive, individual, problem) is FP Labs' work. FiveStacks adds:
   run once it clearly reaches or can no longer reach the qualifying quality. The technique is
   informed by the approach in `vehicle_routing/murelan`; re-implemented inside this crate.
 - Track profiles for the 2000/3000 `n_nodes` tracks (10 decomposition phases, scaled granularity).
+- **Early-stop TARGETS calibration (this ep4 submission):** the n=2000/3000 tracks previously
+  fell back to the n=1000 line (186200), which sat above both live lines and made the
+  give-up threshold unreachable — the solver bailed every nonce at sub-line quality. The
+  corrected lines (2000 -> 148123, 3000 -> 136092) let those tracks genuinely search.
+  Proven on the real fuel counter: bundle-average quality beats the leader in both its
+  corrected configs, and recovers qualifiers they cannot (4/10 at n=2000 vs 0).
 
 ## License
 
