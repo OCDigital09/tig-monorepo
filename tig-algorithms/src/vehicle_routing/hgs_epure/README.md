@@ -3,7 +3,7 @@
 ## Submission Details
 
 * **Challenge Name:** vehicle_routing
-* **Algorithm Name:** hgs_epure_ep3
+* **Algorithm Name:** hgs_epure
 * **Copyright:** 2026 Copyright FP Labs modifications FiveStacks
 * **Identity of Submitter:** FiveStacks
 * **Identity of Creator of Algorithmic Method:** Thibaut Vidal base implementation by FP Labs
