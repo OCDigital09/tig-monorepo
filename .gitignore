@@ -27,3 +27,12 @@ tig-binary/src/entry_point.rs
 export_symbols.map
 output.map
 **/mod.rs.bak
+# Local fuel-counter bench build products + runtime output dirs — NEVER commit
+tig-algorithms/lib/vehicle_routing/amd64/
+*.so
+*_off.json/
+*_on.json/
+mh.json/
+dsout_*.json/
+out_*.json/
+rt_*.json/

@@ -13,12 +13,13 @@
 
 All `Params` fields are set via the TIG runtime hyperparameters map (serde-merged over the
 defaults; `exploration_level` is the only key the solver intercepts itself). The solver's
-two Iteration-1/2 levers:
+Iteration-1/2 levers plus the early-stop calibration:
 
 | key | type | default | behaviour |
 |---|---|---|---|
 | `regret_k` | usize | `1` | Repair look-ahead in the SREX crossover. `1` = stock greedy repair (bit-identical), `>1` = regret-k insertion (insert the unplanned customer with the largest best-minus-second-best gap first). |
 | `credit_scale_permille` | usize | `1000` | LS deterioration-budget multiplier (permille). `1000` = exact stock `move_credit` cap, `>1000` lets the local search accept more deteriorating moves to escape local minima, `<1000` tightens it into a purer descent. |
+| `early_stop` + `target_quality` | f64 / f64 | on / table-fallback | Between-decomposition-phase stopping: halt a nonce once it clearly reaches the qualifying quality, or give up when it provably cannot. The per-track target is read from `TARGETS` in `stopping.rs`; `target_quality` overrides it. If the target is set ABOVE the live qualifying line (e.g. the pre-fix n=2000/3000 fallback to 186200), `giveup_quality` becomes unreachable and the solver bails every nonce at ~2-4e9 fuel with sub-line quality — it can never qualify. Setting the line correctly (2000->148123, 3000->136092) lets these tracks genuinely search and recover qualifiers. |
 
 **Recommended scored setting:** `credit_scale_permille = 2500`. Measured same-seed/reproducible:
 quality +2.2% at n=600 and +1.9% at n=1000 vs the stock setting (see `genetic.rs`/`local_search.rs`
@@ -26,10 +27,13 @@ commit history for the runs). `regret_k > 1` does **not** combine with the credi
 two cancel (measured 171290 vs 172263 at n=600) — so either keep `regret_k = 1` with the credit
 boost, or run regret-k alone with `credit_scale_permille = 1000`.
 
-**Default-build guarantee:** both default to stock-equivalent values (`regret_k = 1`,
+**Default-build guarantee:** the search levers default to stock-equivalent values (`regret_k = 1`,
 `credit_scale_permille = 1000`), so an unmodified submission is bit-identical to the base
-`hgs_epure`. The `bench_standalone_fuel` Cargo feature (the `__fuel_remaining` shim for local
-benchmarks) is **off** in the default build and must never be enabled on a scored build.
+`hgs_epure`. The early-stop layer (`early_stop`, `TARGETS`) is shippable-by-default: its corrected
+n=2000/3000 lines were measured on the real fuel counter (parity on 600-1000, recovered
+qualifiers on 2000/3000 vs the leader's stale 186200 snap). The `bench_standalone_fuel` Cargo
+feature (the `__fuel_remaining` shim for local benchmarks) is **off** in the default build and must
+never be enabled on a scored build.
 
 ## Fuel profile (measured, judged build 0.0.8)
 
